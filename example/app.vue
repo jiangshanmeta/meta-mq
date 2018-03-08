@@ -1,6 +1,6 @@
 <template>
     <section>
-        test
+        {{$mq}}
     </section>
 </template>
 
