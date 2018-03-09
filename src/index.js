@@ -151,14 +151,7 @@ export default{
                     },
 
                 }
-            },
-            filters:{
-                mq(mediaQuery,config={}){
-
-                },
-            },
-
-
+            }
         });
 
     }
