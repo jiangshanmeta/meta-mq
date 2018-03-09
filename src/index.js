@@ -1,5 +1,3 @@
-import mqLayout from './mq-layout'
-
 const defaultBreakPoints = {
     xs:768,
     sm:992,
@@ -7,16 +5,22 @@ const defaultBreakPoints = {
     lg:Infinity,
 }
 
+const defaultTag = 'div';
+
+const defaultConfig = {
+    breakpoints:defaultBreakPoints,
+    tag:defaultTag,
+}
+
 function setMq(name,evt){
     if(evt.matches){
-        console.log(name)
         this.mq = name;
     }
 }
 
 export default{
-    install(Vue,{breakpoints=defaultBreakPoints}={breakpoints:defaultBreakPoints}){
-        Vue.component('mq-layout',mqLayout);
+    install(Vue,{breakpoints=defaultBreakPoints,tag=defaultTag}=defaultConfig){
+
 
         const mediaList = Object.keys(breakpoints).map(function(name){
             return {
@@ -31,6 +35,14 @@ export default{
             data:{
                 mq:"",
                 mediaList,
+            },
+            computed:{
+                nameIndexMap(){
+                    return this.mediaList.reduce((obj,item,index)=>{
+                        obj[item.name] = index;
+                        return obj;
+                    },{});
+                },
             },
             created(){
                 const maxIndex = mediaList.length - 1;
@@ -60,6 +72,7 @@ export default{
             },
         });
 
+
         Vue.mixin({
             beforeCreate(){
                 Object.defineProperty(this,'$mq',{
@@ -67,6 +80,77 @@ export default{
                         return mqvm.mq;
                     },
                 })
+            },
+            components:{
+                mqLayout:{
+                    functional:true,
+                    name:"mq-layout",
+                    render(h,{props,slots}){
+
+                        const defaultSlot = slots().default;
+
+                        if(!defaultSlot){
+                            return;
+                        }
+
+                        let mqList = Array.isArray(props.visible)?Array.from(props.visible):[props.visible];
+
+                        if(props.plus || props.minus){
+                            const indexArr = mqList.map((item)=>{
+                                return mqvm.nameIndexMap[item];
+                            })
+
+                            if(props.plus){
+                                let maxIndex = Math.max(...indexArr);
+                                for(let i=maxIndex+1;i<mediaList.length;i++){
+                                    mqList.push(mediaList[i].name);
+                                }
+
+                            }
+
+                            if(props.minus){
+                                let minIndex = Math.min(...indexArr);
+                                for(let i=0;i<minIndex;i++){
+                                    mqList.push(mediaList[i].name);
+                                }
+                            }
+                            
+                        }
+
+                        if(mqList.includes(mqvm.mq)){
+                            let childLength = defaultSlot.length;
+                            if(childLength>1 || !props.slim){
+                                return h(props.tag,defaultSlot);
+                            }else{
+                                return defaultSlot[0];
+                            }
+                        }
+
+                    },
+                    props:{
+                        visible:{
+                            type:[Array,String],
+                            required:true,
+                        },
+                        plus:{
+                            type:Boolean,
+                            default:false,
+                        },
+                        minus:{
+                            type:Boolean,
+                            default:false,
+                        },
+                        slim:{
+                            type:Boolean,
+                            default:false,
+                        },
+                        tag:{
+                            type:String,
+                            default:tag,
+                        }
+                    },
+
+                }
             },
             filters:{
                 mq(mediaQuery,config={}){
