@@ -72,15 +72,14 @@ export default{
             },
         });
 
+        Object.defineProperty(Vue.prototype,'$mq',{
+            get(){
+                return mqvm.mq;
+            }
+        })
+
 
         Vue.mixin({
-            beforeCreate(){
-                Object.defineProperty(this,'$mq',{
-                    get(){
-                        return mqvm.mq;
-                    },
-                })
-            },
             components:{
                 mqLayout:{
                     functional:true,
